@@ -28,7 +28,7 @@ object Argument {
     override def build[C](f: Unit => C) = PFun.unit(f(()))
   }
 
-  implicit def argPair[A, B](implicit argA: => Argument[A], argB: Argument[B]): Argument[(A, B)] =
+  implicit def argPair[A, B](implicit argA: => Argument[A], argB: => Argument[B]): Argument[(A, B)] =
     new Argument[(A, B)] {
       override def build[C](f: ((A, B)) => C) =
         PFun.product(
@@ -36,11 +36,11 @@ object Argument {
         )
     }
 
-  implicit def argEither[A, B](implicit argA: Argument[A], argB: Argument[B]): Argument[Either[A, B]] =
+  implicit def argEither[A, B](implicit argA: => Argument[A], argB: => Argument[B]): Argument[Either[A, B]] =
     new Argument[Either[A, B]] {
       override def build[C](f: Either[A, B] => C) = PFun.union(
-        PFun.left(Argument[A].build(a => f(Left(a)))),
-        PFun.right(Argument[B].build(b => f(Right(b))))
+        PFun.left(argA.build(a => f(Left(a)))),
+        PFun.right(argB.build(b => f(Right(b))))
       )
     }
 
